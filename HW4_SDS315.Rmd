@@ -18,7 +18,7 @@ Name: Madeline Boss
 
 EID: mrb5727
 
-To see the code visit [Github]()
+To see the code visit [Github](https://github.com/MadelineRBoss/HW4_SDS315)
 
 ```{r datasets, include = FALSE}
 data1 <- read_csv("GasPrices.csv")
