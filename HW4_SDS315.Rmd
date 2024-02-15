@@ -8,6 +8,7 @@ date: "2024-02-13"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
 library(dplyr)
 library(tidyverse)
 library(mosaic)
@@ -38,18 +39,14 @@ Claim: If there is no direct competition in sight, gas stations charge more
 Evidence:  
 
 ```{r 1A, echo =FALSE}
-boot_NoCompetitors <- do(10000)*mean(~Price, data=mosaic::resample(filter(data1, Competitors == "N")))
-
-boot_YesCompetitors <- do(10000)*mean(~Price, data=mosaic::resample(filter(data1, Competitors == "Y")))
-
-Competitors_average_change <- boot_NoCompetitors - boot_YesCompetitors
+Competitors_average_change <- do(10000)*diffmean(Price ~ Competitors, data=mosaic::resample(data1))
 
 Competitors_ci <- confint(Competitors_average_change, level = 0.95)
 
-ggplot(Competitors_average_change) + geom_histogram(aes(x = mean), binwidth = 0.005) + labs(x = "avergae mean differnece in price", y = "frequency", title = "Average price difference between gas stations without competitors and gas stations with competitors")
+ggplot(Competitors_average_change) + geom_histogram(aes(x = diffmean), binwidth = 0.005) + labs(x = "avergae mean differnece in price", y = "frequency", title = "Average price difference between gas stations without competitors and gas stations with competitors")
 ```
 
-Conclusion: In Summary, gas prices for gas stations for without nearby competitors have a price increase between \$`r round(Competitors_ci[3],4)` and \$`r round(Competitors_ci[4],4)` with 95% confidence. Since there's only positive in the range of potential values of the true mean, we can say with 95% confidence that gas stations without competitors have a price increase.  
+Conclusion: In Summary, gas prices for gas stations for without nearby competitors have a price increase between \$`r round(Competitors_ci[2],4)` and \$`r round(Competitors_ci[3],4)` with 95% confidence. Since 0 is included in the confidence interval, we cannot say with 95% confidence that gas stations without competitors have a price increase.  
 
 \newpage
 
@@ -62,12 +59,14 @@ Evidence:
 ```{r 1B, echo=FALSE}
 ggplot(data1) + geom_point(aes(Income, Price)) + labs(title = "Income of an Area vs Gas Station Prices")
 
+data1$Income <- data1$Income/10000
+
 boot_income = do(10000)*lm(Price ~ Income, data=mosaic::resample(data1))
 
 income_ci <- confint(boot_income, level = 0.95)
 ```
 
-Conclusion: In summary, income and price has positive relationship, with an average increase between \$`r round(income_ci$lower[2] * 1000, 4)` and \$`r round(income_ci$upper[2] * 1000,4)` for every dollar increased in income of the ZIP code the gas station is located, with 95% confidence. Since the confidence interval only has positive values, we can conclude with 95% confidence higher ZIP income does increase gas station prices.  
+Conclusion: In summary, income and price has positive relationship, with an average increase between \$`r round(income_ci$lower[2], 4)` and \$`r round(income_ci$upper[2],4)` for every 10,000 dollars increased in mean income of the ZIP code the gas station is located, with 95% confidence. Since the confidence interval only has positive values, we can conclude with 95% confidence higher ZIP income does increase gas station prices.  
 
 \newpage
 
@@ -78,18 +77,14 @@ Claim: Gas stations at stoplights charge more.
 Evidence:  
 
 ```{r 1C, echo=FALSE}
-boot_NoStoplights <- do(10000)*mean(~Price, data=mosaic::resample(filter(data1, Stoplight == "N")))
-
-boot_YesStoplights <- do(10000)*mean(~Price, data=mosaic::resample(filter(data1, Stoplight == "Y")))
-
-Stoplight_average_change <- boot_YesStoplights - boot_NoStoplights
+Stoplight_average_change <- do(10000)*diffmean(Price~Stoplight, data=mosaic::resample(data1))
 
 Stoplight_ci <- confint(Stoplight_average_change, level = 0.95)
 
-ggplot(Stoplight_average_change) + geom_histogram(aes(x = mean), binwidth = 0.005) + labs(x = "avergae mean differnece in price", y = "frequency", title = "Average price difference between gas stations at stoplights and gas stations not at stoplight")
+ggplot(Stoplight_average_change) + geom_histogram(aes(x = diffmean), binwidth = 0.005) + labs(x = "avergae mean differnece in price", y = "frequency", title = "Average price difference between gas stations at stoplights and gas stations not at stoplight")
 ```
 
-Conclusion: In Summary, gas prices for gas stations for nearby stoplights have a price increase between \$`r round(Stoplight_ci[3],4)` and \$`r round(Stoplight_ci[4],4)` with 95% confidence. Since there's only negative values in the confidence interval, we cannot say with 95% confidence there is a price increase for stations nearby stoplights.  
+Conclusion: In Summary, gas prices for gas stations for nearby stoplights have a price increase between \$`r round(Stoplight_ci[2],4)` and \$`r round(Stoplight_ci[3],4)` with 95% confidence. Since 0 is in the confidence interval, we cannot say with 95% confidence there is a price increase for stations nearby stoplights.  
 
 \newpage
 
@@ -99,18 +94,16 @@ Claim: Gas Stations with direct highway access charge more.
 
 Evidence:  
 ```{r 1D, echo=FALSE}
-boot_NoHighway <- do(10000)*mean(~Price, data=mosaic::resample(filter(data1, Highway == "N")))
+#Fix Description
+Highway_average_change <- do(10000)*diffmean(Price ~ Highway, data=mosaic::resample(data1))
 
-boot_YesHighway <- do(10000)*mean(~Price, data=mosaic::resample(filter(data1, Highway == "Y")))
-
-Highway_average_change <- boot_YesHighway - boot_NoHighway
 
 Highway_ci <- confint(Highway_average_change, level = 0.95)
 
-ggplot(Highway_average_change) + geom_histogram(aes(x = mean), binwidth = 0.005) + labs(x = "avergae mean differnece in price", y = "frequency", title = "Average price difference between gas stations at highways and gas stations not at highways")
+ggplot(Highway_average_change) + geom_histogram(aes(x = diffmean), binwidth = 0.005) + labs(x = "avergae mean differnece in price", y = "frequency", title = "Average price difference between gas stations at highways and gas stations not at highways")
 ```
 
-Conclusion: In Summary, gas prices for gas stations next to highways have a price increase between \$`r round(Highway_ci[3],4)` and \$`r round(Highway_ci[4],4)` with 95% confidence. Since there's only positive values in the confidence interval, we can say with 95% confidence there is an price increase for gas stations near highways.  
+Conclusion: In Summary, gas prices for gas stations next to highways have a price increase between \$`r round(Highway_ci[2],4)` and \$`r round(Highway_ci[3],4)` with 95% confidence. Since there's only positive values in the confidence interval, we can say with 95% confidence there is an price increase for gas stations near highways.  
 
 \newpage
 
@@ -120,18 +113,16 @@ Claim: Shell charges more than all other non-Shell Brands.
 
 Evidence:  
 ```{r 1E, echo=FALSE}
-boot_NonShell <- do(10000)*mean(~Price, data=mosaic::resample(filter(data1, Brand != "Shell")))
+data1E <- mutate(data1, "Is_Shell" = ifelse(Brand == "Shell", TRUE, FALSE))
 
-boot_Shell <- do(10000)*mean(~Price, data=mosaic::resample(filter(data1, Brand == "Shell")))
+Shell_average_change <-do(10000)*diffmean(Price ~ Is_Shell, data=mosaic::resample(data1E))
 
-Shell_average_change <- boot_Shell - boot_NonShell
+Shell_ci <- confint(Shell_average_change, level = 0.95)
 
-Shell_ci <- confint(Highway_average_change, level = 0.95)
-
-ggplot(Shell_average_change) + geom_histogram(aes(x = mean), binwidth = 0.005) + labs(x = "avergae mean differnece in price", y = "frequency", title = "Average price difference between Shell gas stations and other gas stations")
+ggplot(Shell_average_change) + geom_histogram(aes(x = diffmean), binwidth = 0.005) + labs(x = "avergae mean differnece in price", y = "frequency", title = "Average price difference between Shell gas stations and other gas stations")
 ```
 
-Conclusion: In Summary, gas prices for Shell gas stations compared to other gas stations have a price increase of \$`r round(Shell_ci[3],4)` and \$`r round(Shell_ci[4],4)` with 95% confidence. Since the confidence interval has only positive values, we are able to say with 95% confidence that Shell gas stations charge more.   
+Conclusion: In Summary, gas prices for Shell gas stations compared to other gas stations have a price increase of \$`r round(Shell_ci[2],4)` and \$`r round(Shell_ci[3],4)` with 95% confidence. Since the confidence interval has 0, we are not able to say with 95% confidence that Shell gas stations charge more.   
 
 \newpage
 
@@ -170,17 +161,15 @@ Approach: Bootstrap the average happiness score for each show and compare the di
 
 Results:
 ```{r 3a, echo =FALSE}
-boot_Ed <- do(10000)*mean(~Q1_Happy, data=mosaic::resample(filter(data3, Show == "Living with Ed")))
+data3A <- filter(data3, Show == "Living with Ed" | Show == "My Name is Earl")
 
-boot_Earl <- do(10000)*mean(~Q1_Happy, data=mosaic::resample(filter(data3, Show == "My Name is Earl")))
-
-Ed_vs_Earl <- boot_Ed - boot_Earl
+Ed_vs_Earl <- do(10000)*diffmean(Q1_Happy ~ Show, data=mosaic::resample(data3A))
 
 Ed_vs_Earl_ci <- confint(Ed_vs_Earl, level = .95)
 ```
-The 95% confidence interval is `r round(Ed_vs_Earl_ci[3],3)` to `r round(Ed_vs_Earl_ci[4],3)`.
+The 95% confidence interval is `r round(Ed_vs_Earl_ci[2],3)` to `r round(Ed_vs_Earl_ci[3],3)`.
 
-Conclusion: Since the confidence interval for difference in happiness between Living with Ed or My Name is Earl includes only positive numbers, we can say with 95% confidence that Living with Ed makes people happier
+Conclusion: Since the confidence interval for difference in happiness includes 0, we cannot say with 95% confidence that either show makes people happier
 
 #### Part B  
 
@@ -190,15 +179,13 @@ Approach: Bootstrap the mean annoyed score for both The Biggest Loser and The Ap
 
 Results:
 ```{r 3b, echo =FALSE}
-boot_Loser <- do(10000)*mean(~Q1_Annoyed, data=mosaic::resample(filter(data3, Show == "The Biggest Loser")))
+data3B <- filter(data3, Show == "The Biggest Loser" | Show == "The Apprentice: Los Angeles")
 
-boot_Apprentice <- do(10000)*mean(~Q1_Annoyed, data=mosaic::resample(filter(data3, Show == "The Apprentice: Los Angeles")))
-
-Loser_vs_Apprentice <- boot_Loser - boot_Apprentice
+Loser_vs_Apprentice <- do(10000)*diffmean(Q1_Annoyed ~ Show, data=mosaic::resample(data3B))
 
 Loser_vs_Apprentice_ci <- confint(Loser_vs_Apprentice, level = .95)
 ```
-The 95% confidence interval is `r round(Loser_vs_Apprentice_ci[3],3)` to `r round(Loser_vs_Apprentice_ci[4],3)`.
+The 95% confidence interval is `r round(Loser_vs_Apprentice_ci[2],3)` to `r round(Loser_vs_Apprentice_ci[3],3)`.
 
 Conclusion: Since the 95% confidence interval has only negative values, we can conclude The Apprentice: Los Angeles makes people more annoyed.
 
@@ -206,7 +193,7 @@ Conclusion: Since the 95% confidence interval has only negative values, we can c
 
 Question: What proportion of Americans find Dancing with the Stars confusing.
 
-Approach: Bootstrap the proportion of results that responded a 4 or higher.
+Approach: Bootstrap the proportion of results that responded a 4 or higher on Q2_Confusing.
 
 Results:
 ```{r 3C, echo=FALSE}
@@ -221,11 +208,7 @@ Conclusion: With 95% confidence, the proportion of Americans that are confused b
 \newpage
 ### Probelm 4  
 ```{r 4, echo=FALSE}
-boot_ad_pause = do(10000)*mean(~rev_ratio,  data=mosaic::resample(filter(data4, adwords_pause == 1)))
-
-boot_ad_contorl = do(10000)*mean(~rev_ratio,  data=mosaic::resample(filter(data4, adwords_pause == 0)))
-
-ad_differnce = boot_ad_pause - boot_ad_contorl
+ad_differnce = do(10000)*diffmean(rev_ratio ~ adwords_pause,  data=mosaic::resample(data4))
 
 ad_differnce_ci = confint(ad_differnce)
 ```
@@ -234,6 +217,6 @@ Question: Should Ebay stop paying for Google Ads?
 
 Approach: Bootstrap the treatment group (pausing ads) and the control group (not pausing ads), and find the confidence interval for the difference in means in their revenue ratio. Positive numbers will show better revenue ratio for the treatment group, while negative values show the control group having a better revenue ratio.
 
-Results: The 95% confidence interval is `r round(ad_differnce_ci[3],3)` to `r round(ad_differnce_ci[4],3)`.
+Results: The 95% confidence interval is `r round(ad_differnce_ci[2],3)` to `r round(ad_differnce_ci[3],3)`.
 
 Conclusion. Since the 95% confidence interval does not include 0 and contains only negative values, we can conclude that Ebay makes more money when they pay for Google ads.
